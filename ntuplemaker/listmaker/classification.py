@@ -1,23 +1,37 @@
 import path_search as ps
-import class_objects as co
 import os, sys
 import time
 
-def save_data_list(run, trigger, filepath):
-    class_txt = "./List/data_" + run + "_" + trigger + ".txt"
-    with open(class_txt,'a') as f:
-        if run in filepath:
-            if trigger in filepath:
-                if "25Oct2019" in filepath:
-                    f.write(filepath + '\n')
-
-def save_mc_list(run, process, filepath):
-    class_txt = "./List/mc_" + run + "_" + process + ".txt"
-    with open(class_txt,'a') as f:
-        if run in filepath:
-            if process in filepath:
-                if "25Oct2019" in filepath:
-                    f.write(filepath + '\n')
+def data_run(path):
+    tmp = ''
+    run = ['Run2016','Run2017','Run2018']
+    for i in run:
+        if i in path:
+            tmp = i
+    return tmp
+            
+def mc_run(path):
+    tmp = ''
+    run = ['RunIISummer16','RunIIFall17','RunIIAutumn18']
+    for i in run:
+        if i in path:
+            tmp = i
+    return tmp
+#def save_data_list(run, trigger, filepath):
+#    class_txt = "./List/data_" + run + "_" + trigger + ".txt"
+#    with open(class_txt,'a') as f:
+#        if run in filepath:
+#            if trigger in filepath:
+#                if "25Oct2019" in filepath:
+#                    f.write(filepath + '\n')
+#
+#def save_mc_list(run, process, filepath):
+#    class_txt = "./List/mc_" + run + "_" + process + ".txt"
+#    with open(class_txt,'a') as f:
+#        if run in filepath:
+#            if process in filepath:
+#                if "25Oct2019" in filepath:
+#                    f.write(filepath + '\n')
 
 def round_time(start):
     str_itv = str(round((time.time()-start),1))
@@ -38,20 +52,36 @@ print(round_time(start_time) + " seconds passed\n")
 os.rmdir('List')
 os.mkdir('List')
 
-print("(3/6) Classifying the data ...")
+print("(3/6) Classifying and Saving the DATA NanoAOD ...")
+data_classification = {}
 for i in list_data:
-    run = co.data_run(i)
-    trigger = co.data_trigger(i)
-    if run == 0 or trigger == 0:
-        continue
-    save_data_list(run, trigger, i)
+    trigger = i.split('/')[4]
+    year = data_run(i)
+    mode = year + "_" + trigger
+    if mode not in data_classification:
+        data_classification[mode] = []
+    data_classification[mode].append(i)
+print(data_classification)
+for key, paths in data_classification.items():
+    with open("./List/data_" + key + ".txt","w") as f:
+        for path in paths:
+            f.write(path + "\n")
 print(round_time(start_time) + " seconds passed\n")
 
-print("(4/6) Classifying the MC lists ...")
+print("(4/6) Classifying and Saving the MC NanoAOD ...")
+mc_classification = {}
 for i in list_mc:
-    run = co.mc_run(i)
-    process = co.mc_process(i)
-    save_mc_list(run, process, i)
+    process = i.split('/')[4]
+    year = mc_run(i)
+    mode = year + "_" + process
+    if mode not in mc_classification:
+        mc_classification[mode] = []
+    mc_classification[mode].append(i)
+print(mc_classification)
+for key, paths in mc_classification.items():
+    with open("./List/mc_" + key + ".txt","w") as f:
+        for path in paths:
+            f.write(path + "\n")
 print(round_time(start_time) + " seconds passed\n")
 
 print("(5/6) DAS formmating for DATA ...")
