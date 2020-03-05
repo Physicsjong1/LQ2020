@@ -9,27 +9,31 @@ from LFNTool import SearchROOT
 # List of Branch Objects
 def objects():
     obj_Event = ['event']
-    obj_Jet = ['nJet','nbJet','Jet_btagDeepB','Jet_btagDeepC','Jet_eta','Jet_mass','Jet_phi','Jet_pt']
-    obj_Electron = ['nElectron','Electron_charge','Electron_eta','Electron_mass','Electron_phi','Electron_pt']
-    obj_Muon = ['nMuon','Muon_charge','Muon_eta','Muon_mass','Muon_phi','Muon_pt']
+    obj_Jet = ['nJet','nbJet','Jet_btagDeepFlavB','Jet_btagDeepFlavC','Jet_eta','Jet_mass','Jet_phi','Jet_pt','Jet_cleanmask']
+    obj_Electron = ['nElectron','Electron_charge','Electron_eta','Electron_mass','Electron_phi','Electron_pt','Electron_jetIdx','Electron_jetRelIso','Electron_cutBased','Electron_cleanmask']
+    obj_Muon = ['nMuon','Muon_charge','Muon_eta','Muon_mass','Muon_phi','Muon_pt','Muon_jetIdx','Muon_jetRelIso','Muon_looseId','Muon_mediumId','Muon_tightId','Muon_cleanmask']
     obj_MET = ['MET_phi','MET_pt','MET_sumEt']
-    obj_Tau = ['nTau','Tau_charge','Tau_chargedIso','Tau_eta','Tau_idAntiMu','Tau_mass','Tau_neutralIso','Tau_phi','Tau_pt']
+    obj_Tau = ['nTau','Tau_charge','Tau_chargedIso','Tau_eta','Tau_idAntiMu','Tau_mass','Tau_neutralIso','Tau_phi','Tau_pt','Tau_idDeepTau2017v2p1VSe','Tau_idDeepTau2017v2p1VSmu','Tau_idDeepTau2017v2p1VSjet','Tau_jetIdx','Tau_cleanmask','Tau_jetIdx']
     obj = obj_Event + obj_Jet + obj_Electron + obj_Muon + obj_MET + obj_Tau
     return obj
 
 
 # Ntuplemaker RDataFrame
 def ntuplemaker(inputfile, obj):
-    print("Searching input root file...")
-    searcher= SearchROOT()
-    searcher.verboseOn()
-    infilePFN = searcher.fromLFN(inputfile).toPFN()
-    print("Load ROOTFile : "+infilePFN)
-    
-    df = ROOT.ROOT.RDataFrame("Events", infilePFN)
-    entries = df.Count()
+#    print("Searching input root file...")
+#    searcher= SearchROOT()
+#    searcher.verboseOn()
+#    infilePFN = searcher.fromLFN(inputfile).toPFN()
+#    print("Load ROOTFile : "+infilePFN)
+#    
+#    df = ROOT.ROOT.RDataFrame("Events", infilePFN)
+#    entries = df.Count()
 
-#    df = ROOT.ROOT.RDataFrame("Events", inputfile)
+    print(inputfile)
+    inputfile = inputfile.replace("\n","")
+    inputfile = inputfile.replace("\n","")
+    print(inputfile)
+    df = ROOT.ROOT.RDataFrame("Events", inputfile)
 
     # Get Branch Lists such as Jet_pt, Muon_eta, ...
     v = ROOT.vector('string')()
@@ -37,30 +41,22 @@ def ntuplemaker(inputfile, obj):
         v.push_back(name)
 
 
-    # Event Selections
+# Event Selections
 #    sel_electron = df.Filter('All(Electron_pt > 30 && abs(Electron_eta) < 2.4)','Electron pt & eta Selection')
 #    sel_muon = sel_electron.Filter('All(Muon_pt > 30 && abs(Muon_eta) < 2.4)','Muon pt & eta Selection')
 #    #sel_tau = sel_lep_pt.Filter('All(Tau_pt > 30 && (Tau_eta) < 2.4)','Tau pt & eta selection')
-    sel_jet = df.Filter('All(Jet_pt > 30 && abs(Jet_eta < 2.4))','Jet pt & eta Selection')
-    sel_jet_entries = sel_jet.Count()
+#    sel_jet = df.Filter('All(Jet_pt > 30 && abs(Jet_eta < 2.4))','Jet pt & eta Selection')
+#    sel_jet_entries = sel_jet.Count()
 #    sel_MET = sel_jet.Filter('MET_pt > 30','MET pt Selection')
 
 
-    # Add nbjet branch
-    #br_nbJet = sel_jet.Define('nbJet','Sum(Jet_btagDeepB > 0.8953)')    # 2016 tight
-    #br_nbJet = sel_jet.Define('nbJet','Sum(Jet_btagDeepB > 0.8001)')    # 2017 tight
-    br_nbJet = sel_jet.Define('nbJet','Sum(Jet_btagDeepB > 0.7527)')    # 2018 tight
+# Add nbjet branch
+#    br_nbJet = df.Define('nbJet','Sum(Jet_btagDeepB > 0.8953)')    # 2016 tight
+#    br_nbJet = df.Define('nbJet','Sum(Jet_btagDeepB > 0.8001)')    # 2017 tight
+#    br_nbJet = df.Define('nbJet','Sum(Jet_btagDeepB > 0.7527)')    # 2018 tight
+    br_nbJet = df.Define('nbJet','Sum(Jet_btagDeepFlavB > 
     br_nbJet.Snapshot('Tree','output.root',v)   # b-tagged events only
-
-    report = sel_jet.Report()
-    x = report.Print()
     
-    with open("events.txt","a") as f:
-        f.write("\nInputfile : " + inputfile + "\n")
-        f.write("Entries : " + str(entries.GetValue()) + "\n") 
-        f.write("Jet selection : " + str(sel_jet_entries.GetValue()) + "\n")
-    return report
-
 inputfile = sys.argv[1]
 obj = objects()
 ntuplemaker(inputfile, obj)

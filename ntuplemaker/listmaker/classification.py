@@ -48,7 +48,7 @@ data_dir = '/xrootd/store/data'
 mc_dir = '/xrootd/store/mc'
 if os.path.exists('List'):
     os.rmdir('List')
-    os.mkdir('List')
+os.mkdir('List')
 
 
 print("(1/6) Searching for the NanoAOD DATA in KISTI T3")
@@ -68,7 +68,7 @@ for key, paths in data_classification.items():
 
 
 print("(4/6) Classifying and Saving the MC NanoAOD ...")
-mc_classification = classification(list_data, "mc")
+mc_classification = classification(list_mc, "mc")
 for key, paths in mc_classification.items():
     with open("./List/mc_" + key + ".txt","w") as f:
         for path in paths:
