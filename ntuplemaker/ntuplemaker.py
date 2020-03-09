@@ -1,44 +1,64 @@
+from ROOT import *
 import ROOT
 import sys
-#import objects as obj
-from LFNTool import SearchROOT
-
-# ROOT.ROOT.EnableImplicitMT()
-
 
 # List of Branch Objects
 def objects():
     obj_Event = ['event']
-    obj_Jet = ['nJet','nbJet','Jet_btagDeepFlavB','Jet_btagDeepFlavC','Jet_eta','Jet_mass','Jet_phi','Jet_pt','Jet_cleanmask']
+    obj_Jet = ['nJet','Jet_btagDeepFlavB','Jet_btagDeepFlavC','Jet_eta','Jet_mass','Jet_phi','Jet_pt','Jet_cleanmask']
     obj_Electron = ['nElectron','Electron_charge','Electron_eta','Electron_mass','Electron_phi','Electron_pt','Electron_jetIdx','Electron_jetRelIso','Electron_cutBased','Electron_cleanmask']
     obj_Muon = ['nMuon','Muon_charge','Muon_eta','Muon_mass','Muon_phi','Muon_pt','Muon_jetIdx','Muon_jetRelIso','Muon_looseId','Muon_mediumId','Muon_tightId','Muon_cleanmask']
     obj_MET = ['MET_phi','MET_pt','MET_sumEt']
     obj_Tau = ['nTau','Tau_charge','Tau_chargedIso','Tau_eta','Tau_idAntiMu','Tau_mass','Tau_neutralIso','Tau_phi','Tau_pt','Tau_idDeepTau2017v2p1VSe','Tau_idDeepTau2017v2p1VSmu','Tau_idDeepTau2017v2p1VSjet','Tau_jetIdx','Tau_cleanmask','Tau_jetIdx']
-    obj = obj_Event + obj_Jet + obj_Electron + obj_Muon + obj_MET + obj_Tau
+    obj_bcJet = ['nbJet_l','nbJet_m','nbJet_t','ncJet_l','ncJet_m','ncJet_t','nJet_blcl','nJet_blcm','nJet_blct','nJet_bmcl','nJet_bmcm','nJet_bmct','nJet_btcl','nJet_btcm','nJet_btct']
+    obj = obj_Event + obj_Jet + obj_Electron + obj_Muon + obj_MET + obj_Tau + obj_bcJet
     return obj
-
 
 # Ntuplemaker RDataFrame
 def ntuplemaker(inputfile, obj):
-#    print("Searching input root file...")
-#    searcher= SearchROOT()
-#    searcher.verboseOn()
-#    infilePFN = searcher.fromLFN(inputfile).toPFN()
-#    print("Load ROOTFile : "+infilePFN)
-#    
-#    df = ROOT.ROOT.RDataFrame("Events", infilePFN)
-#    entries = df.Count()
-
-    print(inputfile)
     inputfile = inputfile.replace("\n","")
-    inputfile = inputfile.replace("\n","")
-    print(inputfile)
     df = ROOT.ROOT.RDataFrame("Events", inputfile)
 
     # Get Branch Lists such as Jet_pt, Muon_eta, ...
     v = ROOT.vector('string')()
     for name in obj:
         v.push_back(name)
+
+    list_cutflow = []
+    list_cutflow.append(df.Count().GetValue())  # Total Events
+
+# Jet cut
+    cut_Jets = df.Filter('All(Jet_pt > 30 && abs(Jet_eta < 2.4) )','Jet pt & eta cut')
+    br_nbJets = cut_Jets.Define('nbJet_l','Sum(Jet_btagDeepFlavB > 0.0494)')  \
+                        .Define('nbJet_m','Sum(Jet_btagDeepFlavB > 0.2770)')  \
+                        .Define('nbJet_t','Sum(Jet_btagDeepFlavB > 0.7264)')
+    br_ncJets = br_nbJets.Define('ncJet_l','Sum(Jet_btagDeepFlavC > 0.03)')  \
+                        .Define('ncJet_m','Sum(Jet_btagDeepFlavC > 0.085)')  \
+                        .Define('ncJet_t','Sum(Jet_btagDeepFlavC > 0.48)') 
+    br_nbcJets = br_ncJets.Define('nJet_blcl','Sum((Jet_btagDeepFlavB > 0.0494) && (Jet_btagDeepFlavC > 0.0300))')  \
+                        .Define('nJet_blcm','Sum((Jet_btagDeepFlavB > 0.0494) && (Jet_btagDeepFlavC > 0.0850))')  \
+                        .Define('nJet_blct','Sum((Jet_btagDeepFlavB > 0.0494) && (Jet_btagDeepFlavC > 0.4800))')  \
+                        .Define('nJet_bmcl','Sum((Jet_btagDeepFlavB > 0.2770) && (Jet_btagDeepFlavC > 0.0300))')  \
+                        .Define('nJet_bmcm','Sum((Jet_btagDeepFlavB > 0.2770) && (Jet_btagDeepFlavC > 0.0850))')  \
+                        .Define('nJet_bmct','Sum((Jet_btagDeepFlavB > 0.2770) && (Jet_btagDeepFlavC > 0.4800))')  \
+                        .Define('nJet_btcl','Sum((Jet_btagDeepFlavB > 0.7264) && (Jet_btagDeepFlavC > 0.0300))')  \
+                        .Define('nJet_btcm','Sum((Jet_btagDeepFlavB > 0.7264) && (Jet_btagDeepFlavC > 0.0850))')  \
+                        .Define('nJet_btct','Sum((Jet_btagDeepFlavB > 0.7264) && (Jet_btagDeepFlavC > 0.4800))')
+    
+    list_cutflow.append(cut_Jets.Count().GetValue())  # Jet pt & eta selection
+
+    br_nbcJets.Snapshot('Tree','output.root',v)
+
+    # Add cutflow histogram
+    outfile = TFile('output.root','UPDATE')
+    h_cutflow = TH1F('h_cutflow','Cutflow',5, 0, 5)
+    for i, sel in enumerate(list_cutflow):
+        h_cutflow.SetBinContent(i,sel)
+    outfile.Write()
+
+inputfile = sys.argv[1]
+obj = objects()
+ntuplemaker(inputfile, obj)
 
 
 # Event Selections
@@ -48,18 +68,25 @@ def ntuplemaker(inputfile, obj):
 #    sel_jet = df.Filter('All(Jet_pt > 30 && abs(Jet_eta < 2.4))','Jet pt & eta Selection')
 #    sel_jet_entries = sel_jet.Count()
 #    sel_MET = sel_jet.Filter('MET_pt > 30','MET pt Selection')
-
-
-# Add nbjet branch
-#    br_nbJet = df.Define('nbJet','Sum(Jet_btagDeepB > 0.8953)')    # 2016 tight
-#    br_nbJet = df.Define('nbJet','Sum(Jet_btagDeepB > 0.8001)')    # 2017 tight
-#    br_nbJet = df.Define('nbJet','Sum(Jet_btagDeepB > 0.7527)')    # 2018 tight
-    br_nbJet = df.Define('nbJet','Sum(Jet_btagDeepFlavB > 
-    br_nbJet.Snapshot('Tree','output.root',v)   # b-tagged events only
     
-inputfile = sys.argv[1]
-obj = objects()
-ntuplemaker(inputfile, obj)
+# Add nbjet, ncjet branches
+# No Jet cut
+#    br_nbcJets = df.Define('nbJet_l','Sum(Jet_btagDeepFlavB > 0.0494)') 
+#        .Define('nbJet_m','Sum(Jet_btagDeepFlavB > 0.2770)') 
+#        .Define('nbJet_t','Sum(Jet_btagDeepFlavB > 0.7264)') 
+#        .Define('ncJet_l','Sum(Jet_btagDeepFlavC > 0.0300)') 
+#        .Define('ncJet_m','Sum(Jet_btagDeepFlavC > 0.0850)') 
+#        .Define('ncJet_t','Sum(Jet_btagDeepFlavC > 0.4800)')
+#        .Define('nJet_blcl','Sum((Jet_btagDeepFlavB > 0.0494) && (Jet_btagDeepFlavC > 0.0300))') 
+#        .Define('nJet_blcm','Sum((Jet_btagDeepFlavB > 0.0494) && (Jet_btagDeepFlavC > 0.0850))') 
+#        .Define('nJet_blct','Sum((Jet_btagDeepFlavB > 0.0494) && (Jet_btagDeepFlavC > 0.4800))') 
+#        .Define('nJet_bmcl','Sum((Jet_btagDeepFlavB > 0.2770) && (Jet_btagDeepFlavC > 0.0300))') 
+#        .Define('nJet_bmcm','Sum((Jet_btagDeepFlavB > 0.2770) && (Jet_btagDeepFlavC > 0.0850))') 
+#        .Define('nJet_bmct','Sum((Jet_btagDeepFlavB > 0.2770) && (Jet_btagDeepFlavC > 0.4800))') 
+#        .Define('nJet_btcl','Sum((Jet_btagDeepFlavB > 0.7264) && (Jet_btagDeepFlavC > 0.0300))') 
+#        .Define('nJet_btcm','Sum((Jet_btagDeepFlavB > 0.7264) && (Jet_btagDeepFlavC > 0.0850))') 
+#        .Define('nJet_btct','Sum((Jet_btagDeepFlavB > 0.7264) && (Jet_btagDeepFlavC > 0.4800))') 
+
 
 #files = rs.rootfiles(year, sample)  # year : 2016, ... sample : DoubleEG, ...
 #print(len(files))
@@ -71,8 +98,6 @@ ntuplemaker(inputfile, obj)
 #    outputfilename = "Data_Run" + year + "_" + sample + "_" + str(i) + ".root"
 #    outputfile = "./ntuples/data_Run" + year + sample + "/" + outputfilename
 #    ntuplemaker(inputfile, outputfile)
-
-
 
 
 
