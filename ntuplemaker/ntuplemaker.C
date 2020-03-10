@@ -35,22 +35,22 @@ void ntuplemaker(const char *inputFile)
     // muon_looseID = PF muon id & Global or Tracker Muon
     // muon_mediumID = 
     auto sel_Jets = sel_Muons.Filter("Sum(Jet_pt>30 && abs(Jet_eta)<2.4)>=3","Jet selection");
-    auto sel_Taus = sel_Jets.Filter("Sum(Tau_pt>20 && abs(Tau_eta)<2.3)==1","Tau selection");
-//                .Define("nbJet_l","Sum(Jet_btagDeepFlavB>0.0494)")
-//                .Define("nbJet_m","Sum(Jet_btagDeepFlavB>0.2770)")
-//                .Define("nbJet_t","Sum(Jet_btagDeepFlavB>0.7264)")
-//                .Define("ncJet_l","Sum(Jet_btagDeepFlavC>0.03)")
-//                .Define("ncJet_m","Sum(Jet_btagDeepFlavC>0.085)")
-//                .Define("ncJet_t","Sum(Jet_btagDeepFlavC>0.48)")
-//                .Define("nJet_blcl","Sum((Jet_btagDeepFlavB>0.0494) && (Jet_btagDeepFlavC>0.0300))")
-//                .Define("nJet_blcm","Sum((Jet_btagDeepFlavB>0.0494) && (Jet_btagDeepFlavC>0.0850))")
-//                .Define("nJet_blct","Sum((Jet_btagDeepFlavB>0.0494) && (Jet_btagDeepFlavC>0.4800))")
-//                .Define("nJet_bmcl","Sum((Jet_btagDeepFlavB>0.2770) && (Jet_btagDeepFlavC>0.0300))")
-//                .Define("nJet_bmcm","Sum((Jet_btagDeepFlavB>0.2770) && (Jet_btagDeepFlavC>0.0850))")
-//                .Define("nJet_bmct","Sum((Jet_btagDeepFlavB>0.2770) && (Jet_btagDeepFlavC>0.4800))")
-//                .Define("nJet_btcl","Sum((Jet_btagDeepFlavB>0.7264) && (Jet_btagDeepFlavC>0.0300))")
-//                .Define("nJet_btcm","Sum((Jet_btagDeepFlavB>0.7264) && (Jet_btagDeepFlavC>0.0850))")
-//                .Define("nJet_btct","Sum((Jet_btagDeepFlavB>0.7264) && (Jet_btagDeepFlavC>0.4800))");
+    auto sel_Taus = sel_Jets.Filter("Sum(Tau_pt>20 && abs(Tau_eta)<2.3)==1","Tau selection")
+                .Define("nbJet_l","Sum(Jet_btagDeepFlavB>0.0494)")
+                .Define("nbJet_m","Sum(Jet_btagDeepFlavB>0.2770)")
+                .Define("nbJet_t","Sum(Jet_btagDeepFlavB>0.7264)")
+                .Define("ncJet_l","Sum((Jet_btagDeepFlavC/(Jet_btagDeepFlavC+Jet_btagDeepFlavB))>0.4)")
+                .Define("ncJet_m","Sum((Jet_btagDeepFlavC/(Jet_btagDeepFlavC+Jet_btagDeepFlavB))>0.29)")
+                .Define("ncJet_t","Sum((Jet_btagDeepFlavC/(Jet_btagDeepFlavC+Jet_btagDeepFlavB))>0.05)")
+                .Define("nJet_blcl","Sum((Jet_btagDeepFlavB>0.0494) && ((Jet_btagDeepFlavC/(Jet_btagDeepFlavC+Jet_btagDeepFlavB))>0.4000))")
+                .Define("nJet_blcm","Sum((Jet_btagDeepFlavB>0.0494) && ((Jet_btagDeepFlavC/(Jet_btagDeepFlavC+Jet_btagDeepFlavB))>0.2900))")
+                .Define("nJet_blct","Sum((Jet_btagDeepFlavB>0.0494) && ((Jet_btagDeepFlavC/(Jet_btagDeepFlavC+Jet_btagDeepFlavB))>0.0500))")
+                .Define("nJet_bmcl","Sum((Jet_btagDeepFlavB>0.2770) && ((Jet_btagDeepFlavC/(Jet_btagDeepFlavC+Jet_btagDeepFlavB))>0.4000))")
+                .Define("nJet_bmcm","Sum((Jet_btagDeepFlavB>0.2770) && ((Jet_btagDeepFlavC/(Jet_btagDeepFlavC+Jet_btagDeepFlavB))>0.2900))")
+                .Define("nJet_bmct","Sum((Jet_btagDeepFlavB>0.2770) && ((Jet_btagDeepFlavC/(Jet_btagDeepFlavC+Jet_btagDeepFlavB))>0.0500))")
+                .Define("nJet_btcl","Sum((Jet_btagDeepFlavB>0.7264) && ((Jet_btagDeepFlavC/(Jet_btagDeepFlavC+Jet_btagDeepFlavB))>0.4000))")
+                .Define("nJet_btcm","Sum((Jet_btagDeepFlavB>0.7264) && ((Jet_btagDeepFlavC/(Jet_btagDeepFlavC+Jet_btagDeepFlavB))>0.2900))")
+                .Define("nJet_btct","Sum((Jet_btagDeepFlavB>0.7264) && ((Jet_btagDeepFlavC/(Jet_btagDeepFlavC+Jet_btagDeepFlavB))>0.0500))");
     
     float nevt_total = df.Count().GetValue();
     float nevt_sel_Muons = sel_Muons.Count().GetValue();
